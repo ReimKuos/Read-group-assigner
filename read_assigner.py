@@ -104,12 +104,12 @@ class ReadAssigner:
 
 def main():
 
-    filename, groups = sys.argv[1:3]
+    filename, groups, outputfile = sys.argv[1:3]
     
     ReadAssigner(
         input_file = filename,
         cell_types = groups.split(":"),
-        output_file = "test.tsv",
+        output_file = outputfile,
         save_meta = False
     )
 
