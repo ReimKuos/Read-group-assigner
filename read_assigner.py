@@ -83,7 +83,7 @@ class ReadAssigner:
         isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
 
-        print("Assigning read groups... ")
+        print("Assigning read groups... ", end = "")
         for i, cell_info in enumerate(self.cell_ids):
             cell_id, isoform_id = cell_info
             cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
