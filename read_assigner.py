@@ -28,6 +28,18 @@ class ReadAssigner:
         
         self.write_assignement(output_file = output_file)
 
+    
+    def read_fasta_file(self, fasta_file: str) -> None:
+        fastqdata = open(fasta_file, "r")
+        for line in fastqdata:
+            if line[0] == '>':
+                isofrom = re.findall(r"ENSMUST[0-9.]+", line)
+                if isofrom == []:
+                    continue
+                self.cell_ids.append(line[1:].strip("\n"))
+                self.isoform_counts[isofrom[0]] += 1
+        fastqdata.close()
+
 
     def read_fastq_file(self, fastq_file: str) -> None:
         fastqdata = open(fastq_file, "r")
