@@ -32,6 +32,7 @@ class ReadAssigner:
 
     
     def read_fasta_file(self, fasta_file: str) -> None:
+        print("Reading fasta-file...", end = "")
         fastqdata = open(fasta_file, "r")
         for line in fastqdata:
             if line[0] == '>':
@@ -41,9 +42,10 @@ class ReadAssigner:
                 self.cell_ids.append(line[1:].strip("\n"))
                 self.isoform_counts[isofrom[0]] += 1
         fastqdata.close()
-
+        print("Done!")
 
     def read_fastq_file(self, fastq_file: str) -> None:
+        print("Reading fastq-file...", end = "")
         fastqdata = open(fastq_file, "r")
         for line in fastqdata:
             if line[0] == "@":
@@ -51,16 +53,18 @@ class ReadAssigner:
                 self.cell_ids.append(line[1:].strip("\n"))
                 self.isoform_counts[isofrom] += 1
         fastqdata.close()
+        print("Done!")
 
 
     def read_bam_file(self, bam_file: str) -> None:
+        print("Reading bam-file...", end = "")
         samfile = pysam.AlignmentFile(bam_file, "rb")
         for read in samfile.fetch():
             isofrom = re.findall(r"ENSMUST[0-9.]+", read.query_name)[0]
             self.cell_ids.append(read.query_name)
             self.isoform_counts[isofrom] += 1
         samfile.close()
-
+        print("Done!")
 
     def create_isoform_distribution(self) -> np.array:
 
@@ -76,22 +80,27 @@ class ReadAssigner:
 
     def write_assignement(self, output_file: str) -> None:
 
+        print("Creating Isoform distributions... ", end = "")
         read_groups = pd.DataFrame(columns = ["read_id", "cell_type"])
         cell_type_counts = pd.DataFrame(np.zeros(shape = (len(self.isoform_counts), len(self.cell_types))), index = self.isoform_counts.keys() ,columns = self.cell_types, dtype = int)
         isoform_distributions, distributions = self.create_isoform_distribution() 
+        print("Done!")
 
+        print("Assigning read groups... ")
         for i, cell_id in enumerate(self.cell_ids):
             isoform_id = re.findall(r"ENSMUST[0-9.]+", cell_id)[0]
             cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions[isoform_id]))
             read_groups.loc[i] = [cell_id, cell_type]
             cell_type_counts.loc[isoform_id, cell_type] += 1
+        print("Done!")
 
+        print("Saving results... ", end = "")
         isoform_distributions = pd.DataFrame(distributions, index = self.isoform_counts.keys(), columns = self.cell_types)
 
         isoform_distributions.to_csv("distributions." + output_file, sep = '\t')
         cell_type_counts.to_csv("counts." + output_file, sep = '\t')
         read_groups.to_csv(output_file, header = False, columns = None, index = None, sep = '\t')
-
+        print("Done!")
 
 def main():
 
