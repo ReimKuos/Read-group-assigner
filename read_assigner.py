@@ -66,16 +66,13 @@ class ReadAssigner:
         samfile.close()
         print("Done!")
 
-    def create_isoform_distribution(self) -> np.array:
+    def create_isoform_distribution(self) -> pd.DataFrame:
 
         distributions = np.random.random(size = (len(self.isoform_counts), len(self.cell_types)))
         distributions = distributions / distributions.sum(axis = 1).reshape(-1, 1)
-        isoform_distributions = defaultdict(np.array)
+        isoform_distributions = pd.DataFrame(distributions, index = self.isoform_counts.keys(), columns = self.cell_types)
 
-        for i, isoform_id in enumerate(self.isoform_counts):
-            isoform_distributions[isoform_id] = distributions[i] 
-
-        return isoform_distributions, distributions
+        return isoform_distributions
 
 
     def write_assignement(self, output_file: str) -> None:
@@ -83,20 +80,18 @@ class ReadAssigner:
         print("Creating Isoform distributions... ", end = "")
         read_groups = pd.DataFrame(columns = ["read_id", "cell_type"])
         cell_type_counts = pd.DataFrame(np.zeros(shape = (len(self.isoform_counts), len(self.cell_types))), index = self.isoform_counts.keys() ,columns = self.cell_types, dtype = int)
-        isoform_distributions, distributions = self.create_isoform_distribution() 
+        isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
 
         print("Assigning read groups... ")
         for i, cell_id in enumerate(self.cell_ids):
             isoform_id = re.findall(r"ENSMUST[0-9.]+", cell_id)[0]
-            cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions[isoform_id]))
+            cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
             read_groups.loc[i] = [cell_id, cell_type]
             cell_type_counts.loc[isoform_id, cell_type] += 1
         print("Done!")
 
         print("Saving results... ", end = "")
-        isoform_distributions = pd.DataFrame(distributions, index = self.isoform_counts.keys(), columns = self.cell_types)
-
         isoform_distributions.to_csv("distributions." + output_file, sep = '\t')
         cell_type_counts.to_csv("counts." + output_file, sep = '\t')
         read_groups.to_csv(output_file, header = False, columns = None, index = None, sep = '\t')
@@ -104,7 +99,7 @@ class ReadAssigner:
 
 def main():
 
-    filename, groups, outputfile = sys.argv[1:3]
+    filename, groups, outputfile = sys.argv[1:4]
     
     ReadAssigner(
         input_file = filename,
