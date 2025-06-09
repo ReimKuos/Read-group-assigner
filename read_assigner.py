@@ -23,8 +23,10 @@ class ReadAssigner:
             self.read_bam_file(bam_file = input_file)
         elif input_file.endswith(".fastq"):
             self.read_fastq_file(fastq_file = input_file)
+        elif input_file.endswith(".fasta"):
+            self.read_fasta_file(fasta_file = input_file)
         else:
-            print("unrecognized file at INPUT:", input_file)
+            print("unrecognized file type at INPUT:", input_file)
         
         self.write_assignement(output_file = output_file)
 
