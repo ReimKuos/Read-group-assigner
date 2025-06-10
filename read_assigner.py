@@ -18,10 +18,13 @@ class ReadAssigner:
         self.read_ids = []
 
         if input_file.endswith(".bam"):
+            print("Reading bam-file...", end = "")
             self.read_bam_file(bam_file = input_file)
         elif input_file.endswith(".fastq"):
+            print("Reading fastq-file...", end = "")
             self.read_fastq_file(fastq_file = input_file)
         elif input_file.endswith(".fasta"):
+            print("Reading fasta-file...", end = "")
             self.read_fasta_file(fasta_file = input_file)
         else:
             print("unrecognized file type at INPUT:", input_file)
@@ -35,7 +38,6 @@ class ReadAssigner:
 
     
     def read_fasta_file(self, fasta_file: str) -> None:
-        print("Reading fasta-file...", end = "")
         fastqdata = open(fasta_file, "r")
         for line in fastqdata:
             if line[0] == '>':
@@ -48,7 +50,6 @@ class ReadAssigner:
         print("Done!")
 
     def read_fastq_file(self, fastq_file: str) -> None:
-        print("Reading fastq-file...", end = "")
         fastqdata = open(fastq_file, "r")
         for line in fastqdata:
             if line[0] == "@":
@@ -60,7 +61,6 @@ class ReadAssigner:
 
 
     def read_bam_file(self, bam_file: str) -> None:
-        print("Reading bam-file...", end = "")
         samfile = pysam.AlignmentFile(bam_file, "rb")
         for read in samfile.fetch():
             isoform_id = re.findall(r"ENSMUST[0-9.]+", read.query_name)[0]
@@ -93,7 +93,7 @@ class ReadAssigner:
             for j in range(i * k, min(n, (i + 1) * k)):
                 isoform_id, read_id = self.read_ids[j]
                 cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
-                read_groups.loc[i] = [read_id, cell_type]
+                read_groups.loc[j] = [read_id, cell_type]
                 cell_type_counts.loc[isoform_id, cell_type] += 1
             print(f"{5 + i * 5}% ", end = "")
         print("Done!")
