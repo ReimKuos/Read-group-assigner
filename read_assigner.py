@@ -7,8 +7,6 @@ import numpy as np
 
 from collections import defaultdict
 
-# Read input -> Get counts -> Distribute counts -> Assign Counts to cell types -> Create read_group.tsv
-
 class ReadAssigner:
 
     def __init__(self, input_file: str, cell_types: list, output_file: str, save_meta: bool = False):
@@ -28,6 +26,11 @@ class ReadAssigner:
         else:
             print("unrecognized file type at INPUT:", input_file)
         
+        # Possible speedup
+        print("Sorting reads... ", end="")
+        self.cell_ids.sort()
+        print("Done!")
+
         self.write_assignement(output_file = output_file)
 
     
@@ -39,7 +42,7 @@ class ReadAssigner:
                 isoform_id = re.findall(r"ENSMUST[0-9.]+", line)
                 if isoform_id == []:
                     continue
-                self.cell_ids.append((line[1:].strip("\n"), isoform_id[0]))
+                self.cell_ids.append((isoform_id[0], line[1:].strip("\n")))
                 self.isoform_counts[isoform_id[0]] += 1
         fastqdata.close()
         print("Done!")
@@ -50,7 +53,7 @@ class ReadAssigner:
         for line in fastqdata:
             if line[0] == "@":
                 isoform_id = re.findall(r"ENSMUST[0-9.]+", line)[0]
-                self.cell_ids.append((line[1:].strip("\n"), isoform_id))
+                self.cell_ids.append((isoform_id, line[1:].strip("\n")))
                 self.isoform_counts[isoform_id] += 1
         fastqdata.close()
         print("Done!")
@@ -61,7 +64,7 @@ class ReadAssigner:
         samfile = pysam.AlignmentFile(bam_file, "rb")
         for read in samfile.fetch():
             isoform_id = re.findall(r"ENSMUST[0-9.]+", read.query_name)[0]
-            self.cell_ids.append((read.query_name, isoform_id))
+            self.cell_ids.append((isoform_id, read.query_name))
             self.isoform_counts[isoform_id] += 1
         samfile.close()
         print("Done!")
@@ -85,7 +88,7 @@ class ReadAssigner:
 
         print("Assigning read groups... ", end = "")
         for i, cell_info in enumerate(self.cell_ids):
-            cell_id, isoform_id = cell_info
+            isoform_id, cell_id = cell_info
             cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
             read_groups.loc[i] = [cell_id, cell_type]
             cell_type_counts.loc[isoform_id, cell_type] += 1
