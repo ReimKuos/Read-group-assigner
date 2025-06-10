@@ -15,7 +15,7 @@ class ReadAssigner:
 
         self.isoform_counts = defaultdict(int)
         self.cell_types = cell_types
-        self.cell_ids = []
+        self.read_ids = []
 
         if input_file.endswith(".bam"):
             self.read_bam_file(bam_file = input_file)
@@ -28,7 +28,7 @@ class ReadAssigner:
         
         # Possible speedup
         print("Sorting reads... ", end="")
-        self.cell_ids.sort()
+        self.read_ids.sort()
         print("Done!")
 
         self.write_assignement(output_file = output_file)
@@ -42,7 +42,7 @@ class ReadAssigner:
                 isoform_id = re.findall(r"ENSMUST[0-9.]+", line)
                 if isoform_id == []:
                     continue
-                self.cell_ids.append((isoform_id[0], line[1:].strip("\n")))
+                self.read_ids.append((isoform_id[0], line[1:].strip("\n")))
                 self.isoform_counts[isoform_id[0]] += 1
         fastqdata.close()
         print("Done!")
@@ -53,7 +53,7 @@ class ReadAssigner:
         for line in fastqdata:
             if line[0] == "@":
                 isoform_id = re.findall(r"ENSMUST[0-9.]+", line)[0]
-                self.cell_ids.append((isoform_id, line[1:].strip("\n")))
+                self.read_ids.append((isoform_id, line[1:].strip("\n")))
                 self.isoform_counts[isoform_id] += 1
         fastqdata.close()
         print("Done!")
@@ -64,7 +64,7 @@ class ReadAssigner:
         samfile = pysam.AlignmentFile(bam_file, "rb")
         for read in samfile.fetch():
             isoform_id = re.findall(r"ENSMUST[0-9.]+", read.query_name)[0]
-            self.cell_ids.append((isoform_id, read.query_name))
+            self.read_ids.append((isoform_id, read.query_name))
             self.isoform_counts[isoform_id] += 1
         samfile.close()
         print("Done!")
@@ -86,12 +86,16 @@ class ReadAssigner:
         isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
 
-        print("Assigning read groups... ", end = "")
-        for i, cell_info in enumerate(self.cell_ids):
-            isoform_id, cell_id = cell_info
-            cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
-            read_groups.loc[i] = [cell_id, cell_type]
-            cell_type_counts.loc[isoform_id, cell_type] += 1
+        print("Assigning read groups... ", end = "\n")
+        n = len(self.read_ids)
+        k = n // 20 + 1
+        for i in range(20):
+            for j in range(i * k, min(n, (i + 1) * k)):
+                isoform_id, read_id = self.read_ids[j]
+                cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
+                read_groups.loc[i] = [read_id, cell_type]
+                cell_type_counts.loc[isoform_id, cell_type] += 1
+            print(f"{5 + i * 5}% ", end = "")
         print("Done!")
 
         print("Saving results... ", end = "")
