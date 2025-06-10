@@ -18,13 +18,13 @@ class ReadAssigner:
         self.read_ids = []
 
         if input_file.endswith(".bam"):
-            print("Reading bam-file...", end = "")
+            sys.stdout.write("Reading bam-file...")
             self.read_bam_file(bam_file = input_file)
         elif input_file.endswith(".fastq"):
-            print("Reading fastq-file...", end = "")
+            sys.stdout.write("Reading fastq-file...")
             self.read_fastq_file(fastq_file = input_file)
         elif input_file.endswith(".fasta"):
-            print("Reading fasta-file...", end = "")
+            sys.stdout.write("Reading fasta-file...", end = "")
             self.read_fasta_file(fasta_file = input_file)
         else:
             print("unrecognized file type at INPUT:", input_file)
@@ -80,13 +80,13 @@ class ReadAssigner:
 
     def write_assignement(self, output_file: str) -> None:
 
-        print("Creating Isoform distributions... ", end = "")
+        sys.stdout.write("Creating Isoform distributions... ")
         read_groups = pd.DataFrame(columns = ["read_id", "cell_type"])
         cell_type_counts = pd.DataFrame(np.zeros(shape = (len(self.isoform_counts), len(self.cell_types))), index = self.isoform_counts.keys() ,columns = self.cell_types, dtype = int)
         isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
 
-        print("Assigning read groups... ", end = "\n")
+        sys.stdout.write("Assigning read groups... ")
         n = len(self.read_ids)
         k = n // 20 + 1
         for i in range(20):
@@ -95,7 +95,7 @@ class ReadAssigner:
                 cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
                 read_groups.loc[j] = [read_id, cell_type]
                 cell_type_counts.loc[isoform_id, cell_type] += 1
-            print(f"{5 + i * 5}% ", end = "")
+            sys.stdout.write(f"{5 + i * 5}% ")
         print("Done!")
 
         print("Saving results... ", end = "")
