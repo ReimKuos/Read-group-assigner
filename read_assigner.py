@@ -86,7 +86,7 @@ class ReadAssigner:
         isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
 
-        read_groups = open(output_file, "w")
+        read_groups = open(output_file + ".tsv", "w")
 
         sys.stdout.write("Assigning read groups...\n")
         n = len(self.read_ids)
@@ -102,8 +102,8 @@ class ReadAssigner:
         print("Done!")
 
         print("Saving results... ", end = "")
-        isoform_distributions.to_csv("distributions." + output_file, sep = '\t')
-        cell_type_counts.to_csv("counts." + output_file, sep = '\t')
+        isoform_distributions.to_csv(output_file + ".distributions.tsv", sep = '\t')
+        cell_type_counts.to_csv(output_file + ".counts.tsv", sep = '\t')
         #read_groups.to_csv(output_file, header = False, columns = None, index = None, sep = '\t')
         print("Done!")
 
