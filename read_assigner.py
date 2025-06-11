@@ -81,10 +81,12 @@ class ReadAssigner:
     def write_assignement(self, output_file: str) -> None:
 
         sys.stdout.write("Creating Isoform distributions...\n")
-        read_groups = pd.DataFrame(columns = ["read_id", "cell_type"])
+        #read_groups = pd.DataFrame(columns = ["read_id", "cell_type"])
         cell_type_counts = pd.DataFrame(np.zeros(shape = (len(self.isoform_counts), len(self.cell_types))), index = self.isoform_counts.keys() ,columns = self.cell_types, dtype = int)
         isoform_distributions = self.create_isoform_distribution() 
         print("Done!")
+
+        read_groups = open(output_file, "w")
 
         sys.stdout.write("Assigning read groups...\n")
         n = len(self.read_ids)
@@ -93,7 +95,8 @@ class ReadAssigner:
             for j in range(i * k, min(n, (i + 1) * k)):
                 isoform_id, read_id = self.read_ids[j]
                 cell_type = str(np.random.choice(self.cell_types, p = isoform_distributions.loc[isoform_id]))
-                read_groups.loc[j] = [read_id, cell_type]
+                #read_groups.loc[j] = [read_id, cell_type]
+                read_groups.write(f"{read_id}\t{cell_type}\n")
                 cell_type_counts.loc[isoform_id, cell_type] += 1
             print(f"{5 + i * 5}% ", flush = True, end = "")
         print("Done!")
@@ -101,7 +104,7 @@ class ReadAssigner:
         print("Saving results... ", end = "")
         isoform_distributions.to_csv("distributions." + output_file, sep = '\t')
         cell_type_counts.to_csv("counts." + output_file, sep = '\t')
-        read_groups.to_csv(output_file, header = False, columns = None, index = None, sep = '\t')
+        #read_groups.to_csv(output_file, header = False, columns = None, index = None, sep = '\t')
         print("Done!")
 
 def main():
